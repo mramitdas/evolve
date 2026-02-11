@@ -229,6 +229,65 @@ const loader = document.getElementById("loader");
 const app = document.getElementById("app");
 const navbar = document.getElementById("navbar");
 
+// Image Preview Modal elements
+const imageModal = document.getElementById("imageModal");
+const modalImage = document.getElementById("modalImage");
+const closeImageModal = document.getElementById("closeImageModal");
+
+// ✅ Open image modal with decrypted image
+async function openImageModal(encUrl, hexKey) {
+    try {
+        modalImage.src = FALLBACK_AVATAR;
+        const decryptedUrl = await decryptImageFromUrl(encUrl, hexKey);
+        modalImage.src = decryptedUrl;
+        imageModal.classList.remove("hidden");
+    } catch (e) {
+        console.warn("Failed to decrypt image for modal:", e);
+    }
+}
+
+// ✅ Close image modal
+function closeImageModalHandler() {
+    imageModal.classList.add("hidden");
+    modalImage.src = "";
+}
+
+// Close modal on button click
+if (closeImageModal) {
+    closeImageModal.addEventListener("click", closeImageModalHandler);
+}
+
+// Close modal on background click
+if (imageModal) {
+    imageModal.addEventListener("click", (e) => {
+        if (e.target === imageModal) {
+            closeImageModalHandler();
+        }
+    });
+}
+
+// Close modal on Escape key
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && imageModal && !imageModal.classList.contains("hidden")) {
+        closeImageModalHandler();
+    }
+});
+
+// ✅ Setup avatar click handlers (works for both table and mobile cards)
+function setupAvatarClickHandlers() {
+    const hexKey = (config && config.HEX_KEY) || "29cd3a5128416c678ac33b459f5c466c23913446d8666463b5d867c94c6bf944";
+    
+    // Use event delegation on document for dynamically added elements
+    document.addEventListener("click", (e) => {
+        if (e.target.classList.contains("enc-img")) {
+            const encUrl = e.target.dataset.encUrl;
+            if (encUrl) {
+                openImageModal(encUrl, hexKey);
+            }
+        }
+    });
+}
+
 // ✅ Load table.html + after loading, fetch API automatically
 async function loadTablePage(options = {}) {
   const background = !!options.background;
@@ -310,6 +369,9 @@ async function loadTablePage(options = {}) {
   // ✅ Now fetch API data
   fetchTableData();
   tableInitialized = true;
+  
+  // ✅ Initialize avatar click handlers
+  setupAvatarClickHandlers();
 }
 
 // ✅ Toggle filter dropdown (after HTML is loaded)

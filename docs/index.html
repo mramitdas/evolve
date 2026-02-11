@@ -82,6 +82,18 @@
         </div>
     </div>
 
+    <!-- Image Preview Modal -->
+    <div id="imageModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-80">
+        <div class="relative">
+            <button id="closeImageModal" class="absolute -top-10 right-0 text-white hover:text-gray-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            <img id="modalImage" class="w-74 h-74 rounded-full object-cover border-4 border-white shadow-2xl" src="" alt="Avatar Preview"/>
+        </div>
+    </div>
+
     <!-- table.js contains all logic (login hashing, simulated API, load table, search, sort, etc.) -->
     <script type="module" src="js/table.js"></script>
 </body>
