@@ -102,11 +102,14 @@ def handle_attendance():
     POST: Record or update attendance for a client"""
 
     if request.method == "GET":
-        # Get attendance records for a specific date
+        # Get attendance records for a specific date (defaults to today IST)
         record_date = request.args.get("record_date")
-
+        
+        # If not provided, use today's IST date
         if not record_date:
-            return jsonify({"error": "Missing required parameter: record_date"}), 400
+            ist = pytz.timezone("Asia/Kolkata")
+            now_ist = datetime.now(ist)
+            record_date = now_ist.strftime("%Y-%m-%d")
 
         conn = get_db_connection()
         cursor = conn.cursor()

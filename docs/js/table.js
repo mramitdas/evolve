@@ -391,6 +391,58 @@ document.head.appendChild(style);
 // ✅ Attendance toggle functionality with heart-shaped toggle
 const attendanceStates = {}; // Track attendance state per user index
 
+// Get today's date in IST format (YYYY-MM-DD)
+function getTodayISTDate() {
+    const ist = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    const year = ist.getFullYear();
+    const month = String(ist.getMonth() + 1).padStart(2, '0');
+    const day = String(ist.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Fetch attendance data and map to heart toggles
+async function fetchAndMapAttendance() {
+    try {
+        const today = getTodayISTDate();
+        console.log('[attendance] Fetching attendance for date:', today);
+        
+        const response = await fetch(`https://evolve-dzlb.onrender.com/attendance?record_date=${today}`);
+        
+        if (response.ok) {
+            const attendanceData = await response.json();
+            console.log('[attendance] Fetched records:', attendanceData);
+            
+            // Create a map of client_id -> status
+            const attendanceMap = {};
+            attendanceData.forEach(record => {
+                attendanceMap[record.client_id] = record.status.toLowerCase();
+            });
+            
+            // Map to heart toggles
+            const toggles = document.querySelectorAll('.love-toggle-input');
+            toggles.forEach(toggle => {
+                const clientId = parseInt(toggle.dataset.clientId);
+                const index = toggle.dataset.index;
+                
+                if (attendanceMap.hasOwnProperty(clientId)) {
+                    const status = attendanceMap[clientId];
+                    const isPresent = status === 'present';
+                    
+                    // Set checkbox state
+                    toggle.checked = isPresent;
+                    attendanceStates[index] = status;
+                    
+                    console.log(`[attendance] Mapped client ${clientId} (index ${index}): ${status}`);
+                }
+            });
+        } else {
+            console.error('[attendance] Failed to fetch:', response.statusText);
+        }
+    } catch (error) {
+        console.error('[attendance] Error fetching attendance:', error);
+    }
+}
+
 async function recordAttendance(clientId, status) {
     try {
         const response = await fetch('https://evolve-dzlb.onrender.com/attendance', {
@@ -776,6 +828,9 @@ async function fetchTableData() {
       mobileList ? (Array.isArray(data) ? data.length : 0) : 0
     );
     dataReady = true;
+    
+    // ✅ Fetch and map attendance data after rendering table
+    fetchAndMapAttendance();
   } catch (err) {
     console.error("API Load Error:", err);
   }
