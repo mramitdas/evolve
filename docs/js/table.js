@@ -711,7 +711,7 @@ async function fetchTableData() {
                       } text-xs mt-1">${endDateDisplay}</p>
                   </div>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-12">
                   <span class="text-xs text-gray-400">Absent</span>
                   <div class="love-toggle-container">
                       <div class="love-toggle">
