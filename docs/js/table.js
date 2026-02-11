@@ -391,14 +391,46 @@ document.head.appendChild(style);
 // ✅ Attendance toggle functionality with heart-shaped toggle
 const attendanceStates = {}; // Track attendance state per user index
 
+async function recordAttendance(clientId, status) {
+    try {
+        const response = await fetch('https://evolve-dzlb.onrender.com/attendance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                client_id: clientId,
+                status: status
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('[attendance] Recorded successfully:', data);
+        } else {
+            console.error('[attendance] Failed to record:', response.statusText);
+        }
+    } catch (error) {
+        console.error('[attendance] Error recording attendance:', error);
+    }
+}
+
 function setupAttendanceHandlers() {
     document.addEventListener('change', (e) => {
         // Handle heart toggle checkbox changes
         if (e.target.classList.contains('love-toggle-input')) {
             const index = e.target.dataset.index;
+            const clientId = e.target.dataset.clientId;
             const isChecked = e.target.checked;
+            const status = isChecked ? 'Present' : 'Absent';
+            
             attendanceStates[index] = isChecked ? 'present' : 'absent';
-            console.log(`User ${index} attendance: ${attendanceStates[index]}`);
+            console.log(`User ${index} (Client ${clientId}) attendance: ${attendanceStates[index]}`);
+            
+            // Make API call to record attendance
+            if (clientId) {
+                recordAttendance(parseInt(clientId), status);
+            }
         }
     });
 }
@@ -666,7 +698,7 @@ async function fetchTableData() {
                     <td class="px-6 py-4">
                         <div class="love-toggle-container">
                             <div class="love-toggle">
-                                <input type="checkbox" class="love-toggle-input" id="toggle-${index}" data-index="${index}">
+                                <input type="checkbox" class="love-toggle-input" id="toggle-${index}" data-index="${index}" data-client-id="${item.client_id}">
                                 <label class="love-heart" for="toggle-${index}">
                                     <i class="left"></i>
                                     <i class="right"></i>
@@ -715,7 +747,7 @@ async function fetchTableData() {
                   <span class="text-xs text-gray-400">Absent</span>
                   <div class="love-toggle-container">
                       <div class="love-toggle">
-                          <input type="checkbox" class="love-toggle-input" id="toggle-mobile-${index}" data-index="${index}">
+                          <input type="checkbox" class="love-toggle-input" id="toggle-mobile-${index}" data-index="${index}" data-client-id="${item.client_id}">
                           <label class="love-heart" for="toggle-mobile-${index}">
                               <i class="left"></i>
                               <i class="right"></i>
