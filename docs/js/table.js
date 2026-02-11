@@ -288,6 +288,121 @@ function setupAvatarClickHandlers() {
     });
 }
 
+// ✅ Heart-shaped toggle CSS
+const style = document.createElement('style');
+style.textContent = `
+    .love-toggle-container {
+        display: flex;
+        align-items: center;
+        min-width: 50px;
+        margin-left: 1.5rem;
+    }
+    .love-toggle input[type="checkbox"] {
+        display: none;
+    }
+    .love-heart {
+        position: relative;
+        transform: rotate(-45deg) scale(2);
+        display: block;
+        cursor: pointer;
+        border-color: hsl(231deg 28% 86%);
+        border: 1px solid;
+        border-top-left-radius: 100px;
+        border-top-right-radius: 100px;
+        width: 10px;
+        height: 8px;
+        border-bottom: 0;
+        box-sizing: border-box;
+    }
+    .love-heart, .love-heart::after {
+        border-color: hsl(231deg 28% 86%);
+        border: 1px solid;
+        border-top-left-radius: 100px;
+        border-top-right-radius: 100px;
+        width: 10px;
+        height: 8px;
+        border-bottom: 0;
+    }
+    .love-heart::after {
+        content: "";
+        display: block;
+        box-sizing: border-box;
+        position: absolute;
+        border-color: hsl(231deg 28% 86%);
+        right: -9px;
+        transform: rotate(90deg);
+        top: 7px;
+    }
+    .love-heart .bottom {
+        content: "";
+        display: block;
+        box-sizing: border-box;
+        position: absolute;
+        border-color: hsl(231deg 28% 86%);
+        width: 11px;
+        height: 11px;
+        border-left: 1px solid;
+        border-bottom: 1px solid;
+        border-color: hsl(231deg 28% 86%);
+        left: -1px;
+        top: 5px;
+        border-radius: 0px 0px 0px 5px;
+    }
+    .love-heart .round {
+        position: absolute;
+        z-index: 1;
+        width: 8px;
+        height: 8px;
+        background: hsl(0deg 0% 100%);
+        box-shadow: rgb(0 0 0 / 24%) 0px 0px 4px 0px;
+        border-radius: 100%;
+        left: 0px;
+        bottom: -1px;
+        transition: all .5s ease;
+        animation: check-animation2 .5s forwards;
+    }
+    .love-toggle input:checked + .love-heart {
+        border-color: hsl(347deg 81% 61%) !important;
+        box-shadow: inset 6px -5px 0px 2px hsl(347deg 99% 72%);
+    }
+    .love-toggle input:checked + .love-heart::after,
+    .love-toggle input:checked + .love-heart .bottom {
+        border-color: hsl(347deg 81% 61%) !important;
+        box-shadow: inset 6px -5px 0px 2px hsl(347deg 99% 72%);
+    }
+    .love-toggle input:checked + .love-heart .round {
+        transform: translate(7px, 7px);
+        animation: check-animation .5s forwards;
+        background-color: hsl(0deg 0% 100%);
+    }
+    @keyframes check-animation {
+        0% { transform: translate(0px, 0px); }
+        50% { transform: translate(0px, 7px); }
+        100% { transform: translate(7px, 7px); }
+    }
+    @keyframes check-animation2 {
+        0% { transform: translate(7px, 7px); }
+        50% { transform: translate(0px, 7px); }
+        100% { transform: translate(0px, 0px); }
+    }
+`;
+document.head.appendChild(style);
+
+// ✅ Attendance toggle functionality with heart-shaped toggle
+const attendanceStates = {}; // Track attendance state per user index
+
+function setupAttendanceHandlers() {
+    document.addEventListener('change', (e) => {
+        // Handle heart toggle checkbox changes
+        if (e.target.classList.contains('love-toggle-input')) {
+            const index = e.target.dataset.index;
+            const isChecked = e.target.checked;
+            attendanceStates[index] = isChecked ? 'present' : 'absent';
+            console.log(`User ${index} attendance: ${attendanceStates[index]}`);
+        }
+    });
+}
+
 // ✅ Load table.html + after loading, fetch API automatically
 async function loadTablePage(options = {}) {
   const background = !!options.background;
@@ -357,6 +472,10 @@ async function loadTablePage(options = {}) {
   if (nameHeader) {
     nameHeader.addEventListener("click", window.sortNameColumn);
   }
+  const attendanceHeader = document.getElementById("attendanceHeader");
+  if (attendanceHeader) {
+    attendanceHeader.addEventListener("click", window.sortAttendanceColumn);
+  }
 
   // ✅ Initialize filter toggle script AFTER loading HTML
   initFilterToggle();
@@ -372,6 +491,9 @@ async function loadTablePage(options = {}) {
   
   // ✅ Initialize avatar click handlers
   setupAvatarClickHandlers();
+  
+  // ✅ Initialize attendance handlers
+  setupAttendanceHandlers();
 }
 
 // ✅ Toggle filter dropdown (after HTML is loaded)
@@ -541,6 +663,19 @@ async function fetchTableData() {
                             </span>
                         </div>
                     </td>
+                    <td class="px-6 py-4">
+                        <div class="love-toggle-container">
+                            <div class="love-toggle">
+                                <input type="checkbox" class="love-toggle-input" id="toggle-${index}" data-index="${index}">
+                                <label class="love-heart" for="toggle-${index}">
+                                    <i class="left"></i>
+                                    <i class="right"></i>
+                                    <i class="bottom"></i>
+                                    <div class="round"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </td>
                 </tr>
             `;
       tableBody.insertAdjacentHTML("beforeend", row);
@@ -554,25 +689,42 @@ async function fetchTableData() {
       /* ✅ MOBILE CARD VIEW */
       if (mobileList) {
         const card = `
-          <div class="bg-gray-800 rounded-xl p-4 shadow flex items-center gap-4" data-status="${
+          <div class="bg-gray-800 rounded-xl p-4 shadow flex flex-col gap-3" data-status="${
             isActive ? "active" : "inactive"
           }" data-date="${endDateStr}" data-gender="${(
           item.gender || ""
         ).toLowerCase()}">
-              <div class="serial text-gray-400 font-bold text-lg w-6">${
-                index + 1
-              }</div>
+              <div class="flex items-center gap-4">
+                  <div class="serial text-gray-400 font-bold text-lg w-6">${
+                    index + 1
+                  }</div>
 
-              <img data-enc-url="${imgUrl}" src="${FALLBACK_AVATAR}" class="w-12 h-12 rounded-full object-cover enc-img" alt="avatar"/>
+                  <img data-enc-url="${imgUrl}" src="${FALLBACK_AVATAR}" class="w-12 h-12 rounded-full object-cover enc-img" alt="avatar"/>
 
-              <div class="text-left">
-                  <p class="text-white font-semibold text-lg">${item.name}</p>
-                  <p class="phone-mobile text-gray-400 text-sm">${
-                    item.phone_number
-                  }</p>
-                  <p class="${
-                    isActive ? "text-green-400" : "text-red-400"
-                  } text-xs mt-1">${endDateDisplay}</p>
+                  <div class="text-left flex-1">
+                      <p class="text-white font-semibold text-lg">${item.name}</p>
+                      <p class="phone-mobile text-gray-400 text-sm">${
+                        item.phone_number
+                      }</p>
+                      <p class="${
+                        isActive ? "text-green-400" : "text-red-400"
+                      } text-xs mt-1">${endDateDisplay}</p>
+                  </div>
+              </div>
+              <div class="flex items-center gap-2">
+                  <span class="text-xs text-gray-400">Absent</span>
+                  <div class="love-toggle-container">
+                      <div class="love-toggle">
+                          <input type="checkbox" class="love-toggle-input" id="toggle-mobile-${index}" data-index="${index}">
+                          <label class="love-heart" for="toggle-mobile-${index}">
+                              <i class="left"></i>
+                              <i class="right"></i>
+                              <i class="bottom"></i>
+                              <div class="round"></div>
+                          </label>
+                      </div>
+                  </div>
+                  <span class="text-xs text-gray-400">Present</span>
               </div>
           </div>
         `;
@@ -965,6 +1117,57 @@ window.sortNameColumn = function () {
 
   nameAsc = !nameAsc;
   isSortingName = false;
+};
+
+// ✅ Sort Attendance column (Present / Absent)
+let attendanceAsc = true;
+let isSortingAttendance = false;
+window.sortAttendanceColumn = function () {
+  if (isSortingAttendance) return;
+  isSortingAttendance = true;
+
+  const table = document.getElementById("userTable");
+  if (!table) {
+    isSortingAttendance = false;
+    return;
+  }
+  const tbody = table.querySelector("tbody");
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+
+  const keyed = rows.map((el, idx) => {
+    const rowIndex = el.dataset.index || idx;
+    const state = attendanceStates[rowIndex] || 'absent';
+    const origIdx = parseInt(el.dataset.index ?? idx, 10);
+    return { el, state, origIdx };
+  });
+
+  keyed.sort((a, b) => {
+    // Present comes first in ascending, Absent comes first in descending
+    const aPresent = a.state === 'present' ? 1 : 0;
+    const bPresent = b.state === 'present' ? 1 : 0;
+    
+    let cmp = bPresent - aPresent; // Present first
+    if (!attendanceAsc) {
+      cmp = -cmp; // Reverse for descending
+    }
+    
+    if (cmp === 0) {
+      return a.origIdx - b.origIdx; // Stable tie-breaker
+    }
+    return cmp;
+  });
+
+  // Apply new order
+  keyed.forEach(({ el }) => tbody.appendChild(el));
+
+  // Renumber the serial column (#) after sorting
+  Array.from(tbody.querySelectorAll("tr")).forEach((tr, i) => {
+    const serialCell = tr.querySelector("td:nth-child(1)");
+    if (serialCell) serialCell.textContent = String(i + 1);
+  });
+
+  attendanceAsc = !attendanceAsc;
+  isSortingAttendance = false;
 };
 
 function startBackgroundPreload() {
